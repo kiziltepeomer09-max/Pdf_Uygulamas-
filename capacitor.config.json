@@ -1,0 +1,6 @@
+{
+  "appId": "com.pdfconverter.app",
+  "appName": "Dönüştürücü",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
