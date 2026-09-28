@@ -11,24 +11,62 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
+        /* TEMA DEĞİŞKENLERİ */
         :root { --bg-color: #f4f6f8; --surface: #ffffff; --text-main: #2d3436; --text-sec: #636e72; --primary: #0984e3; --border: #dfe6e9; }
-        @media (prefers-color-scheme: dark) { :root { --bg-color: #1e272e; --surface: #2f3640; --text-main: #f5f6fa; --text-sec: #dcdde1; --border: #353b48; } }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Renk Temaları */
+        [data-theme="green"] { --primary: #00b894; }
+        [data-theme="orange"] { --primary: #e17055; }
+        [data-theme="purple"] { --primary: #6c5ce7; }
+        
+        /* Karanlık Mod Desteği (Temalarla Uyumlu) */
+        @media (prefers-color-scheme: dark) { 
+            :root { --bg-color: #1e272e; --surface: #2f3640; --text-main: #f5f6fa; --text-sec: #dcdde1; --border: #353b48; } 
+            [data-theme="green"] { --primary: #55efc4; }
+            [data-theme="orange"] { --primary: #fab1a0; }
+            [data-theme="purple"] { --primary: #a29bfe; }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.3s, border-color 0.3s; }
         body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 70px; }
-        header { padding: 20px; text-align: center; background-color: var(--surface); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        /* Üst Başlık ve Tema Seçici */
+        header { padding: 15px 20px; text-align: center; background-color: var(--surface); box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.2rem; margin: 0; }
+        .theme-picker { display: flex; gap: 8px; }
+        .theme-btn { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); cursor: pointer; }
+        .theme-btn.blue { background-color: #0984e3; }
+        .theme-btn.green { background-color: #00b894; }
+        .theme-btn.orange { background-color: #e17055; }
+        .theme-btn.purple { background-color: #6c5ce7; }
+
         main { padding: 20px; max-width: 600px; margin: 0 auto; }
         .tab-content { display: none; background: var(--surface); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         h2 { margin-bottom: 20px; font-size: 1.2rem; text-align: center; color: var(--primary); }
-        .upload-area { border: 2px dashed var(--primary); border-radius: 10px; padding: 40px 20px; text-align: center; position: relative; margin-bottom: 15px; background: rgba(9, 132, 227, 0.05); }
-        .upload-area input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
-        .upload-area p { color: var(--text-sec); font-size: 0.9rem; pointer-events: none; }
+        .upload-area { border: 2px dashed var(--primary); border-radius: 10px; padding: 30px 20px; text-align: center; position: relative; margin-bottom: 15px; background: rgba(128, 128, 128, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; }
+        .upload-area input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2; }
+        .upload-area p { color: var(--text-sec); font-size: 0.9rem; pointer-events: none; margin-bottom: 10px; }
+        
+        /* Görsel Önizleme Alanı */
+        .preview-container { display: flex; gap: 10px; justify-content: center; pointer-events: none; z-index: 1; }
+        .preview-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .preview-plus { display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 8px; background: var(--border); color: var(--text-sec); font-size: 0.8rem; font-weight: bold; }
+
         .name-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-color); color: var(--text-main); outline: none; }
         .name-input:focus { border-color: var(--primary); }
         .action-btn { width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .action-btn:active { opacity: 0.8; }
-        .status { margin-top: 15px; text-align: center; font-size: 0.9rem; color: #00b894; }
+        .status { margin-top: 15px; text-align: center; font-size: 0.9rem; color: var(--primary); }
+        
+        /* Yeni: Başarı/Detay Kartı */
+        .result-card { margin-top: 15px; padding: 15px; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--primary); text-align: center; display: none; }
+        .result-title { font-weight: bold; color: var(--text-main); margin-bottom: 5px; font-size: 1rem; }
+        .result-size { color: var(--text-sec); font-size: 0.85rem; margin-bottom: 12px; }
+        .share-btn { padding: 10px 20px; background-color: var(--surface); color: var(--primary); border: 1px solid var(--primary); border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        
         .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--surface); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); border-top: 1px solid var(--border); }
         .nav-item { background: none; border: none; color: var(--text-sec); font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 5px 10px; }
         .nav-item.active { color: var(--primary); font-weight: bold; }
@@ -36,41 +74,71 @@
 </head>
 <body>
 
-    <header><h1>Dönüştürücü</h1></header>
+    <header>
+        <h1>Dönüştürücü</h1>
+        <div class="theme-picker">
+            <button class="theme-btn blue" onclick="document.documentElement.setAttribute('data-theme', 'blue')"></button>
+            <button class="theme-btn green" onclick="document.documentElement.setAttribute('data-theme', 'green')"></button>
+            <button class="theme-btn orange" onclick="document.documentElement.setAttribute('data-theme', 'orange')"></button>
+            <button class="theme-btn purple" onclick="document.documentElement.setAttribute('data-theme', 'purple')"></button>
+        </div>
+    </header>
 
     <main>
+        <!-- Görsel Bölümü -->
         <section id="img2pdf" class="tab-content active">
             <h2>JPG/PNG ➔ PDF</h2>
             <div class="upload-area">
                 <input type="file" id="imgInput" accept="image/png, image/jpeg" multiple>
-                <p>Görselleri seçmek için dokunun</p>
+                <p id="imgText">Görselleri seçmek için dokunun</p>
+                <div id="imgPreviewContainer" class="preview-container"></div>
             </div>
             <input type="text" id="imgFileName" placeholder="Dosya adı (örn: resimler)" class="name-input">
             <button onclick="window.convertImageToPdf()" class="action-btn">PDF'e Dönüştür</button>
             <div id="imgStatus" class="status"></div>
+            
+            <div id="imgResultCard" class="result-card">
+                <div class="result-title" id="imgResultName">dosya.pdf</div>
+                <div class="result-size" id="imgResultSize">Boyut: 0 KB</div>
+                <button class="share-btn" onclick="window.shareSavedFile('imgResult')">📤 Tekrar Paylaş</button>
+            </div>
         </section>
 
+        <!-- Word Bölümü -->
         <section id="docx2pdf" class="tab-content">
             <h2>Word ➔ PDF</h2>
             <div class="upload-area">
                 <input type="file" id="docxInput" accept=".docx">
-                <p>Word belgesi seçmek için dokunun</p>
+                <p id="docxText">Word belgesi seçmek için dokunun</p>
             </div>
             <input type="text" id="docxFileName" placeholder="Dosya adı" class="name-input">
             <button onclick="window.convertDocxToPdf()" class="action-btn">PDF'e Dönüştür</button>
             <div id="docxStatus" class="status"></div>
+            
+            <div id="docxResultCard" class="result-card">
+                <div class="result-title" id="docxResultName">dosya.pdf</div>
+                <div class="result-size" id="docxResultSize">Boyut: 0 KB</div>
+                <button class="share-btn" onclick="window.shareSavedFile('docxResult')">📤 Tekrar Paylaş</button>
+            </div>
             <div id="docxRenderArea" style="display:none; padding: 20px; background: white; color: black;"></div>
         </section>
 
+        <!-- Birleştirme Bölümü -->
         <section id="mergepdf" class="tab-content">
             <h2>PDF Birleştirme</h2>
             <div class="upload-area">
                 <input type="file" id="pdfInput" accept=".pdf" multiple>
-                <p>PDF dosyalarını seçmek için dokunun</p>
+                <p id="pdfText">PDF dosyalarını seçmek için dokunun</p>
             </div>
             <input type="text" id="mergeFileName" placeholder="Dosya adı (örn: birlesik_dosya)" class="name-input">
             <button onclick="window.mergePdfs()" class="action-btn">Birleştir</button>
             <div id="mergeStatus" class="status"></div>
+            
+            <div id="mergeResultCard" class="result-card">
+                <div class="result-title" id="mergeResultName">dosya.pdf</div>
+                <div class="result-size" id="mergeResultSize">Boyut: 0 KB</div>
+                <button class="share-btn" onclick="window.shareSavedFile('mergeResult')">📤 Tekrar Paylaş</button>
+            </div>
         </section>
     </main>
 
@@ -80,10 +148,13 @@
         <button class="nav-item" onclick="window.switchTab('mergepdf', this)">🔗 Birleştir</button>
     </nav>
 
-    <!-- Native Eklentilerin Tanımlandığı Yeni Modül -->
     <script type="module">
         import { Filesystem, Directory } from '@capacitor/filesystem';
         import { Share } from '@capacitor/share';
+
+        // Tekrar paylaşım için son oluşturulan dosyaların URI bilgilerini tutarız
+        window.savedUris = { imgResult: null, docxResult: null, mergeResult: null };
+        window.savedNames = { imgResult: null, docxResult: null, mergeResult: null };
 
         window.switchTab = function(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -92,53 +163,100 @@
             element.classList.add('active');
         }
 
-        // Native Android Paylaşım Menüsü Fonksiyonu
-        window.downloadFile = async function(blob, defaultName, inputElement) {
+        // Boyutu okunabilir formata çevirme
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' Bayt';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(2) + ' MB';
+        }
+
+        // Native Android İndirme ve İlk Paylaşım
+        window.downloadAndShare = async function(blob, defaultName, inputElement, sectionPrefix) {
             const customName = inputElement.value.trim();
             const fileName = customName ? `${customName}.pdf` : defaultName;
 
             try {
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = async () => {
-                    const base64data = reader.result.split(',')[1];
+                const base64data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        if (reader.result) resolve(reader.result.split(',')[1]);
+                        else reject(new Error("Dosya okunamadı"));
+                    };
+                    reader.readAsDataURL(blob);
+                });
 
-                    const writeResult = await Filesystem.writeFile({
-                        path: fileName,
-                        data: base64data,
-                        directory: Directory.Cache
-                    });
+                const writeResult = await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64data,
+                    directory: Directory.Cache
+                });
 
-                    await Share.share({
-                        title: fileName,
-                        text: 'Dönüştürülen PDF Dosyası',
-                        url: writeResult.uri,
-                        dialogTitle: 'PDF\'i Kaydet veya Paylaş'
-                    });
-                };
+                // Başarılı kartını göster ve verileri hafızaya al
+                window.savedUris[sectionPrefix] = writeResult.uri;
+                window.savedNames[sectionPrefix] = fileName;
+                
+                document.getElementById(sectionPrefix + 'Card').style.display = 'block';
+                document.getElementById(sectionPrefix + 'Name').innerText = fileName;
+                document.getElementById(sectionPrefix + 'Size').innerText = 'Boyut: ' + formatBytes(blob.size);
+
+                // İlk otomatik paylaşımı başlat
+                await window.shareSavedFile(sectionPrefix);
+
             } catch (err) {
-                alert("Dosya kaydedilirken hata oluştu!");
-                console.error(err);
+                alert("Dosya işlemi başarısız: " + err.message);
+                throw err; 
             }
         }
 
-        // Görsel geri bildirimler
+        // Tekrar Paylaş Butonu Fonksiyonu
+        window.shareSavedFile = async function(sectionPrefix) {
+            const uri = window.savedUris[sectionPrefix];
+            const name = window.savedNames[sectionPrefix];
+            if(uri) {
+                await Share.share({ title: name, text: 'Oluşturulan PDF Dosyası', url: uri, dialogTitle: 'PDF\'i Kaydet veya Paylaş' });
+            }
+        }
+
+        // --- GÖRSEL ÖNİZLEME MOTORU ---
         document.getElementById('imgInput').addEventListener('change', function() {
-            const p = this.nextElementSibling;
-            p.innerText = this.files.length > 0 ? this.files.length + " görsel seçildi" : "Görselleri seçmek için dokunun";
-            p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
+            const container = document.getElementById('imgPreviewContainer');
+            const text = document.getElementById('imgText');
+            container.innerHTML = ''; // Eski önizlemeleri temizle
+            
+            if (this.files.length > 0) {
+                text.innerText = this.files.length + " görsel seçildi";
+                text.style.color = "var(--primary)";
+                
+                // İlk 3 görselin küçük resmini oluştur
+                const limit = Math.min(this.files.length, 3);
+                for (let i = 0; i < limit; i++) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(this.files[i]);
+                    img.className = 'preview-img';
+                    container.appendChild(img);
+                }
+                // Eğer 3'ten fazla seçildiyse +X simgesi ekle
+                if (this.files.length > 3) {
+                    const plus = document.createElement('div');
+                    plus.className = 'preview-plus';
+                    plus.innerText = '+' + (this.files.length - 3);
+                    container.appendChild(plus);
+                }
+            } else {
+                text.innerText = "Görselleri seçmek için dokunun";
+                text.style.color = "var(--text-sec)";
+            }
         });
 
+        // Word ve Birleştirme Geri Bildirimleri
         document.getElementById('docxInput').addEventListener('change', function() {
-            const p = this.nextElementSibling;
-            p.innerText = this.files.length > 0 ? this.files[0].name : "Word belgesi seçmek için dokunun";
-            p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
+            document.getElementById('docxText').innerText = this.files.length > 0 ? this.files[0].name : "Word belgesi seçmek için dokunun";
+            document.getElementById('docxText').style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
         });
 
         document.getElementById('pdfInput').addEventListener('change', function() {
-            const p = this.nextElementSibling;
-            p.innerText = this.files.length > 0 ? this.files.length + " PDF seçildi" : "PDF dosyalarını seçmek için dokunun";
-            p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
+            document.getElementById('pdfText').innerText = this.files.length > 0 ? this.files.length + " PDF seçildi" : "PDF dosyalarını seçmek için dokunun";
+            document.getElementById('pdfText').style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
         });
 
         const toBase64 = file => new Promise((resolve, reject) => {
@@ -148,77 +266,81 @@
             reader.onerror = error => reject(error);
         });
 
+        // Dönüştürme İşlemleri
         window.convertImageToPdf = async function() {
             const files = document.getElementById('imgInput').files;
             const status = document.getElementById('imgStatus');
+            document.getElementById('imgResultCard').style.display = 'none'; // Yeni işlem başlarken eski kartı gizle
+            
             if (files.length === 0) return status.innerText = "Lütfen görsel seçin!";
             
             status.innerText = "İşleniyor...";
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            for (let i = 0; i < files.length; i++) {
-                if (i > 0) doc.addPage();
-                const file = files[i];
-                const base64 = await toBase64(file);
-                doc.addImage(base64, file.type === 'image/png' ? 'PNG' : 'JPEG', 10, 10, 190, 0); 
-            }
-            
-            const pdfBlob = doc.output('blob');
-            window.downloadFile(pdfBlob, 'gorseller.pdf', document.getElementById('imgFileName'));
-            status.innerText = "İşlem tamam!";
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                for (let i = 0; i < files.length; i++) {
+                    if (i > 0) doc.addPage();
+                    const file = files[i];
+                    const base64 = await toBase64(file);
+                    doc.addImage(base64, file.type === 'image/png' ? 'PNG' : 'JPEG', 10, 10, 190, 0); 
+                }
+                
+                const pdfBlob = doc.output('blob');
+                await window.downloadAndShare(pdfBlob, 'gorseller.pdf', document.getElementById('imgFileName'), 'imgResult');
+                status.innerText = "İşlem tamam!";
+            } catch (err) { status.innerText = "Hata oluştu!"; }
         }
 
         window.convertDocxToPdf = async function() {
             const file = document.getElementById('docxInput').files[0];
             const status = document.getElementById('docxStatus');
             const renderArea = document.getElementById('docxRenderArea');
+            document.getElementById('docxResultCard').style.display = 'none';
+            
             if (!file) return status.innerText = "Lütfen bir Word belgesi seçin!";
-            
             status.innerText = "Okunuyor...";
-            const arrayBuffer = await file.arrayBuffer();
             
-            mammoth.convertToHtml({arrayBuffer: arrayBuffer})
-                .then(function(result){
-                    renderArea.innerHTML = result.value;
-                    status.innerText = "PDF oluşturuluyor...";
-                    
-                    const opt = {
-                        margin: 10,
-                        filename: 'belge.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-                    
-                    html2pdf().set(opt).from(renderArea).output('blob').then((pdfBlob) => {
-                        window.downloadFile(pdfBlob, 'belge.pdf', document.getElementById('docxFileName'));
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                mammoth.convertToHtml({arrayBuffer: arrayBuffer})
+                    .then(async function(result) {
+                        renderArea.innerHTML = result.value;
+                        status.innerText = "PDF oluşturuluyor...";
+                        
+                        const opt = { margin: 10, filename: 'belge.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+                        const pdfBlob = await html2pdf().set(opt).from(renderArea).output('blob');
+                        
+                        await window.downloadAndShare(pdfBlob, 'belge.pdf', document.getElementById('docxFileName'), 'docxResult');
                         status.innerText = "İşlem tamam!";
                         renderArea.innerHTML = ''; 
-                    });
-                })
-                .catch(err => status.innerText = "Hata oluştu.");
+                    }).catch(err => status.innerText = "Hata oluştu.");
+            } catch (err) { status.innerText = "Hata oluştu!"; }
         }
 
         window.mergePdfs = async function() {
             const files = document.getElementById('pdfInput').files;
             const status = document.getElementById('mergeStatus');
+            document.getElementById('mergeResultCard').style.display = 'none';
+            
             if (files.length < 2) return status.innerText = "En az 2 PDF dosyası seçin!";
-            
             status.innerText = "Birleştiriliyor...";
-            const mergedPdf = await PDFLib.PDFDocument.create();
             
-            for (let file of files) {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                copiedPages.forEach((page) => mergedPdf.addPage(page));
-            }
-            
-            const mergedPdfFile = await mergedPdf.save();
-            const blob = new Blob([mergedPdfFile], { type: "application/pdf" });
-            window.downloadFile(blob, 'birlesik.pdf', document.getElementById('mergeFileName'));
-            status.innerText = "İşlem tamam!";
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                for (let file of files) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
+                
+                const mergedPdfFile = await mergedPdf.save();
+                const blob = new Blob([mergedPdfFile], { type: "application/pdf" });
+                
+                await window.downloadAndShare(blob, 'birlesik.pdf', document.getElementById('mergeFileName'), 'mergeResult');
+                status.innerText = "İşlem tamam!";
+            } catch (err) { status.innerText = "Hata oluştu!"; }
         }
     </script>
 </body>
