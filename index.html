@@ -118,19 +118,38 @@
         element.classList.add('active');
     }
 
-    // Dosya İndirme Yardımcısı
-    function downloadFile(blob, defaultName, inputElement) {
+    // Dosya İndirme/Paylaşma Yardımcısı (GÜNCELLENDİ)
+    async function downloadFile(blob, defaultName, inputElement) {
         const customName = inputElement.value.trim();
         const fileName = customName ? `${customName}.pdf` : defaultName;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        
+        // Oluşan veriyi paylaşıma uygun 'File' objesine dönüştürüyoruz
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+
+        // Cihazın yerel paylaşım/kaydetme menüsünü tetikle
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    title: fileName,
+                    text: 'Dönüştürülen PDF Dosyası',
+                    files: [file]
+                });
+            } catch (err) {
+                console.log("İşlem iptal edildi veya hata oluştu:", err);
+            }
+        } else {
+            // Paylaşım menüsü açılamazsa eski usul indirmeyi dene (Yedek yöntem)
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     }
+
 
     // GÖRSEL GERİ BİLDİRİMLERİ (YENİ EKLENEN KISIM)
     document.getElementById('imgInput').addEventListener('change', function() {
