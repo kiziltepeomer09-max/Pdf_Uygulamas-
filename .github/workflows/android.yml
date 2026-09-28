@@ -10,10 +10,8 @@ jobs:
           node-version: '18'
       - name: Paketleri Kur
         run: npm install
-      - name: Web Klasörünü Hazırla
-        run: |
-          mkdir www
-          cp index.html www/
+      - name: Web Klasörünü Hazırla (Vite)
+        run: npx vite build
       - name: Android Platformunu Ekle
         run: npx cap add android
       - name: Kodları Senkronize Et
