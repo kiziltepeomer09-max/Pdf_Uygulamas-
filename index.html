@@ -11,7 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.5.1/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- CSS TASARIMI (Doğrudan HTML İçinde) -->
     <style>
         :root {
             --bg-color: #f4f6f8;
@@ -63,7 +62,6 @@
     </header>
 
     <main>
-        <!-- Görselden PDF'e -->
         <section id="img2pdf" class="tab-content active">
             <h2>JPG/PNG ➔ PDF</h2>
             <div class="upload-area">
@@ -75,7 +73,6 @@
             <div id="imgStatus" class="status"></div>
         </section>
 
-        <!-- DOCX'ten PDF'e -->
         <section id="docx2pdf" class="tab-content">
             <h2>Word ➔ PDF</h2>
             <div class="upload-area">
@@ -88,7 +85,6 @@
             <div id="docxRenderArea" style="display:none; padding: 20px; background: white; color: black;"></div>
         </section>
 
-        <!-- PDF Birleştirme -->
         <section id="mergepdf" class="tab-content">
             <h2>PDF Birleştirme</h2>
             <div class="upload-area">
@@ -101,158 +97,145 @@
         </section>
     </main>
 
-    <!-- Alt Navigasyon -->
     <nav class="bottom-nav">
         <button class="nav-item active" onclick="switchTab('img2pdf', this)">📷 Görsel</button>
         <button class="nav-item" onclick="switchTab('docx2pdf', this)">📝 Word</button>
         <button class="nav-item" onclick="switchTab('mergepdf', this)">🔗 Birleştir</button>
     </nav>
 
-    <!-- JAVASCRIPT İŞLEMLERİ (Doğrudan HTML İçinde) -->
     <script>
-    // Sekme Değiştirme
-    function switchTab(tabId, element) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        element.classList.add('active');
-    }
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+        }
 
-    // Dosya İndirme/Paylaşma Yardımcısı (GÜNCELLENDİ)
-    async function downloadFile(blob, defaultName, inputElement) {
-        const customName = inputElement.value.trim();
-        const fileName = customName ? `${customName}.pdf` : defaultName;
-        
-        // Oluşan veriyi paylaşıma uygun 'File' objesine dönüştürüyoruz
-        const file = new File([blob], fileName, { type: 'application/pdf' });
+        async function downloadFile(blob, defaultName, inputElement) {
+            const customName = inputElement.value.trim();
+            const fileName = customName ? `${customName}.pdf` : defaultName;
+            
+            const file = new File([blob], fileName, { type: 'application/pdf' });
 
-        // Cihazın yerel paylaşım/kaydetme menüsünü tetikle
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({
-                    title: fileName,
-                    text: 'Dönüştürülen PDF Dosyası',
-                    files: [file]
-                });
-            } catch (err) {
-                console.log("İşlem iptal edildi veya hata oluştu:", err);
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: fileName,
+                        text: 'Dönüştürülen PDF Dosyası',
+                        files: [file]
+                    });
+                } catch (err) {
+                    console.log("İşlem iptal edildi veya hata oluştu:", err);
+                }
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             }
-        } else {
-            // Paylaşım menüsü açılamazsa eski usul indirmeyi dene (Yedek yöntem)
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         }
-    }
 
+        document.getElementById('imgInput').addEventListener('change', function() {
+            const p = this.nextElementSibling;
+            p.innerText = this.files.length > 0 ? this.files.length + " görsel seçildi" : "Görselleri seçmek için dokunun";
+            p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
+        });
 
-    // GÖRSEL GERİ BİLDİRİMLERİ (YENİ EKLENEN KISIM)
-    document.getElementById('imgInput').addEventListener('change', function() {
-        const p = this.nextElementSibling;
-        p.innerText = this.files.length > 0 ? this.files.length + " görsel seçildi" : "Görselleri seçmek için dokunun";
-        p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
-    });
+        document.getElementById('docxInput').addEventListener('change', function() {
+            const p = this.nextElementSibling;
+            p.innerText = this.files.length > 0 ? this.files[0].name : "Word belgesi seçmek için dokunun";
+            p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
+        });
 
-    document.getElementById('docxInput').addEventListener('change', function() {
-        const p = this.nextElementSibling;
-        p.innerText = this.files.length > 0 ? this.files[0].name : "Word belgesi seçmek için dokunun";
-        p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
-    });
+        document.getElementById('pdfInput').addEventListener('change', function() {
+            const p = this.nextElementSibling;
+            p.innerText = this.files.length > 0 ? this.files.length + " PDF seçildi" : "PDF dosyalarını seçmek için dokunun";
+            p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
+        });
 
-    document.getElementById('pdfInput').addEventListener('change', function() {
-        const p = this.nextElementSibling;
-        p.innerText = this.files.length > 0 ? this.files.length + " PDF seçildi" : "PDF dosyalarını seçmek için dokunun";
-        p.style.color = this.files.length > 0 ? "var(--primary)" : "var(--text-sec)";
-    });
-
-    // 1. Görsel(ler)den PDF'e
-    async function convertImageToPdf() {
-        const files = document.getElementById('imgInput').files;
-        const status = document.getElementById('imgStatus');
-        if (files.length === 0) return status.innerText = "Lütfen görsel seçin!";
-        
-        status.innerText = "İşleniyor...";
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        for (let i = 0; i < files.length; i++) {
-            if (i > 0) doc.addPage();
-            const file = files[i];
-            const base64 = await toBase64(file);
-            doc.addImage(base64, file.type === 'image/png' ? 'PNG' : 'JPEG', 10, 10, 190, 0); 
+        async function convertImageToPdf() {
+            const files = document.getElementById('imgInput').files;
+            const status = document.getElementById('imgStatus');
+            if (files.length === 0) return status.innerText = "Lütfen görsel seçin!";
+            
+            status.innerText = "İşleniyor...";
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            for (let i = 0; i < files.length; i++) {
+                if (i > 0) doc.addPage();
+                const file = files[i];
+                const base64 = await toBase64(file);
+                doc.addImage(base64, file.type === 'image/png' ? 'PNG' : 'JPEG', 10, 10, 190, 0); 
+            }
+            
+            const pdfBlob = doc.output('blob');
+            downloadFile(pdfBlob, 'gorseller.pdf', document.getElementById('imgFileName'));
+            status.innerText = "İşlem tamam!";
         }
-        
-        const pdfBlob = doc.output('blob');
-        downloadFile(pdfBlob, 'gorseller.pdf', document.getElementById('imgFileName'));
-        status.innerText = "İndirme başarılı!";
-    }
 
-    // 2. Word (DOCX) dosyasından PDF'e
-    async function convertDocxToPdf() {
-        const file = document.getElementById('docxInput').files[0];
-        const status = document.getElementById('docxStatus');
-        const renderArea = document.getElementById('docxRenderArea');
-        if (!file) return status.innerText = "Lütfen bir Word belgesi seçin!";
-        
-        status.innerText = "Okunuyor...";
-        const arrayBuffer = await file.arrayBuffer();
-        
-        mammoth.convertToHtml({arrayBuffer: arrayBuffer})
-            .then(function(result){
-                renderArea.innerHTML = result.value;
-                status.innerText = "PDF oluşturuluyor...";
-                
-                const opt = {
-                    margin: 10,
-                    filename: 'belge.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                
-                html2pdf().set(opt).from(renderArea).output('blob').then((pdfBlob) => {
-                    downloadFile(pdfBlob, 'belge.pdf', document.getElementById('docxFileName'));
-                    status.innerText = "İndirme başarılı!";
-                    renderArea.innerHTML = ''; 
-                });
-            })
-            .catch(err => status.innerText = "Hata oluştu.");
-    }
-
-    // 3. PDF Birleştirme
-    async function mergePdfs() {
-        const files = document.getElementById('pdfInput').files;
-        const status = document.getElementById('mergeStatus');
-        if (files.length < 2) return status.innerText = "En az 2 PDF dosyası seçin!";
-        
-        status.innerText = "Birleştiriliyor...";
-        const mergedPdf = await PDFLib.PDFDocument.create();
-        
-        for (let file of files) {
+        async function convertDocxToPdf() {
+            const file = document.getElementById('docxInput').files[0];
+            const status = document.getElementById('docxStatus');
+            const renderArea = document.getElementById('docxRenderArea');
+            if (!file) return status.innerText = "Lütfen bir Word belgesi seçin!";
+            
+            status.innerText = "Okunuyor...";
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-            copiedPages.forEach((page) => mergedPdf.addPage(page));
+            
+            mammoth.convertToHtml({arrayBuffer: arrayBuffer})
+                .then(function(result){
+                    renderArea.innerHTML = result.value;
+                    status.innerText = "PDF oluşturuluyor...";
+                    
+                    const opt = {
+                        margin: 10,
+                        filename: 'belge.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    
+                    html2pdf().set(opt).from(renderArea).output('blob').then((pdfBlob) => {
+                        downloadFile(pdfBlob, 'belge.pdf', document.getElementById('docxFileName'));
+                        status.innerText = "İşlem tamam!";
+                        renderArea.innerHTML = ''; 
+                    });
+                })
+                .catch(err => status.innerText = "Hata oluştu.");
         }
-        
-        const mergedPdfFile = await mergedPdf.save();
-        const blob = new Blob([mergedPdfFile], { type: "application/pdf" });
-        downloadFile(blob, 'birlesik.pdf', document.getElementById('mergeFileName'));
-        status.innerText = "İndirme başarılı!";
-    }
 
-    // Base64 Yardımcısı
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-</script>
+        async function mergePdfs() {
+            const files = document.getElementById('pdfInput').files;
+            const status = document.getElementById('mergeStatus');
+            if (files.length < 2) return status.innerText = "En az 2 PDF dosyası seçin!";
+            
+            status.innerText = "Birleştiriliyor...";
+            const mergedPdf = await PDFLib.PDFDocument.create();
+            
+            for (let file of files) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            }
+            
+            const mergedPdfFile = await mergedPdf.save();
+            const blob = new Blob([mergedPdfFile], { type: "application/pdf" });
+            downloadFile(blob, 'birlesik.pdf', document.getElementById('mergeFileName'));
+            status.innerText = "İşlem tamam!";
+        }
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    </script>
 </body>
 </html>
